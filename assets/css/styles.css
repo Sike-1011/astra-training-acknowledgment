@@ -1,0 +1,189 @@
+/* ===== Astra Global — Training SOP Acknowledgement ===================== */
+
+:root{
+  --navy:#1f3d63;
+  --navy-dark:#162c48;
+  --navy-light:#2c5183;
+  --tan:#c9b49a;
+  --tan-light:#e8ddcf;
+  --ink:#1b2430;
+  --muted:#5f6b7a;
+  --line:#dfe4ea;
+  --bg:#f4f6f9;
+  --card:#ffffff;
+  --ok:#1a7f4b;
+  --ok-bg:#e8f6ee;
+  --err:#c0392b;
+  --err-bg:#fdecea;
+  --radius:10px;
+  --shadow:0 1px 3px rgba(27,36,48,.08), 0 8px 24px rgba(27,36,48,.06);
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+  color:var(--ink);
+  background:var(--bg);
+  line-height:1.55;
+}
+.wrap{width:100%;max-width:920px;margin:0 auto;padding:0 20px}
+
+/* ---------- Header ---------- */
+.site-header{
+  background:#fff;
+  border-bottom:3px solid var(--navy);
+  box-shadow:0 1px 4px rgba(27,36,48,.06);
+}
+.header-inner{display:flex;align-items:center;gap:18px;padding-top:16px;padding-bottom:16px}
+.logo{height:52px;width:auto;display:block}
+.header-text h1{margin:0;font-size:1.15rem;color:var(--navy);letter-spacing:.2px}
+.header-text p{margin:2px 0 0;font-size:.85rem;color:var(--muted)}
+
+/* ---------- Stepper ---------- */
+.stepper{background:var(--navy);color:#fff}
+.stepper-inner{display:flex;gap:6px;overflow-x:auto;padding-top:10px;padding-bottom:10px;scrollbar-width:none}
+.stepper-inner::-webkit-scrollbar{display:none}
+.step-chip{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 12px;border-radius:100px;white-space:nowrap;
+  font-size:.8rem;color:#b9c8dc;background:transparent;flex:0 0 auto;
+}
+.step-chip .num{
+  width:20px;height:20px;border-radius:50%;display:grid;place-items:center;
+  font-size:.72rem;font-weight:700;border:1.5px solid currentColor;flex:0 0 auto;
+}
+.step-chip.active{background:rgba(255,255,255,.14);color:#fff}
+.step-chip.done{color:var(--tan)}
+.step-chip.done .num{background:var(--tan);border-color:var(--tan);color:var(--navy-dark)}
+
+/* ---------- Cards ---------- */
+main{padding:28px 0 56px}
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:26px;margin-bottom:20px;
+}
+.card h2{margin:0 0 6px;font-size:1.3rem;color:var(--navy)}
+.card h3{margin:24px 0 8px;font-size:.95rem;color:var(--navy);
+  text-transform:uppercase;letter-spacing:.6px}
+.muted{color:var(--muted);margin:0 0 18px}
+.small{font-size:.82rem}
+.optional{font-weight:400;color:var(--muted);font-size:.82em}
+
+/* ---------- Form ---------- */
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px 18px}
+@media (max-width:640px){.grid{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column}
+label{font-size:.83rem;font-weight:600;color:var(--navy);margin-bottom:6px}
+input[type=text],input[type=email],input[type=tel],input[type=date]{
+  font:inherit;font-size:.95rem;padding:10px 12px;
+  border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);
+  transition:border-color .15s,box-shadow .15s;width:100%;
+}
+input:focus{outline:none;border-color:var(--navy-light);box-shadow:0 0 0 3px rgba(44,81,131,.14)}
+input.invalid{border-color:var(--err);background:var(--err-bg)}
+.error{color:var(--err);font-size:.78rem;min-height:1.1em;margin-top:4px}
+
+/* ---------- Buttons ---------- */
+.actions{display:flex;gap:12px;margin-top:24px;flex-wrap:wrap}
+.actions-split{justify-content:space-between}
+.btn{
+  font:inherit;font-size:.92rem;font-weight:600;cursor:pointer;
+  padding:11px 20px;border-radius:8px;border:1px solid transparent;
+  text-decoration:none;display:inline-flex;align-items:center;justify-content:center;
+  transition:background .15s,border-color .15s,opacity .15s;
+}
+.btn-primary{background:var(--navy);color:#fff}
+.btn-primary:hover:not(:disabled){background:var(--navy-dark)}
+.btn-ghost{background:#fff;color:var(--navy);border-color:var(--line)}
+.btn-ghost:hover{border-color:var(--navy-light);background:#f8fafc}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* ---------- Document step ---------- */
+.doc-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.doc-head h2{margin:8px 0 4px}
+.pill{
+  display:inline-block;background:var(--tan-light);color:var(--navy-dark);
+  font-size:.72rem;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+  padding:3px 10px;border-radius:100px;
+}
+.viewer{
+  position:relative;margin:18px 0 0;border:1px solid var(--line);
+  border-radius:8px;overflow:hidden;background:#eceff3;
+}
+.viewer iframe{display:block;width:100%;height:70vh;min-height:420px;border:0;background:#fff}
+.viewer-fallback{display:none;padding:28px 20px;text-align:center;background:#fff}
+.viewer.no-inline iframe{display:none}
+.viewer.no-inline .viewer-fallback{display:block}
+
+/* ---------- Read gate ---------- */
+.gate{
+  display:flex;align-items:center;gap:10px;margin-top:14px;padding:11px 14px;
+  border-radius:8px;background:#f0f4f9;color:var(--navy);
+  font-size:.86rem;border:1px solid #dbe4ef;
+}
+.gate.unlocked{background:var(--ok-bg);color:var(--ok);border-color:#c6e6d5}
+.gate.unlocked .spinner{display:none}
+.spinner{
+  width:14px;height:14px;flex:0 0 auto;border-radius:50%;
+  border:2px solid rgba(31,61,99,.25);border-top-color:var(--navy);
+  animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spinner{animation:none}}
+
+/* ---------- Certify checkbox ---------- */
+.certify{
+  display:flex;gap:12px;align-items:flex-start;margin-top:16px;padding:16px;
+  border:1px solid var(--line);border-radius:8px;background:#fbfcfd;
+  cursor:pointer;font-weight:400;transition:border-color .15s,background .15s;
+}
+.certify:has(input:disabled){opacity:.55;cursor:not-allowed}
+.certify:has(input:checked){border-color:var(--ok);background:var(--ok-bg)}
+.certify input{width:18px;height:18px;margin:2px 0 0;flex:0 0 auto;accent-color:var(--navy);cursor:pointer}
+.certify strong{display:block;color:var(--ink);font-size:.95rem}
+.certify em{display:block;font-style:normal;color:var(--muted);font-size:.83rem;margin-top:4px}
+
+/* ---------- Review ---------- */
+.summary{display:grid;grid-template-columns:auto 1fr;gap:8px 20px;margin:0 0 8px;font-size:.92rem}
+.summary dt{color:var(--muted);font-size:.83rem}
+.summary dd{margin:0;font-weight:600}
+.doc-summary{list-style:none;padding:0;margin:0}
+.doc-summary li{
+  display:flex;gap:10px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--line);font-size:.92rem;
+}
+.doc-summary li:last-child{border-bottom:0}
+.doc-summary .check{color:var(--ok);font-weight:700}
+.doc-summary .when{color:var(--muted);font-size:.8rem;margin-left:auto;text-align:right}
+.declaration{margin-top:22px}
+.submit-status{margin:16px 0 0;font-size:.88rem;min-height:1.2em}
+.submit-status.err{color:var(--err)}
+.submit-status.ok{color:var(--ok)}
+
+/* ---------- Done ---------- */
+.done-card{text-align:center}
+.tick{
+  width:56px;height:56px;margin:0 auto 14px;border-radius:50%;
+  background:var(--ok-bg);color:var(--ok);display:grid;place-items:center;font-size:1.9rem;
+}
+.receipt{
+  text-align:left;background:#fbfcfd;border:1px solid var(--line);border-radius:8px;
+  padding:18px;margin:18px 0;font-size:.9rem;
+}
+.receipt .row{display:flex;justify-content:space-between;gap:16px;padding:5px 0;flex-wrap:wrap}
+.receipt .row span:first-child{color:var(--muted)}
+.receipt .row span:last-child{font-weight:600;text-align:right}
+.receipt .ref{font-family:ui-monospace,Consolas,monospace;letter-spacing:.5px}
+.done-card .actions{justify-content:center}
+
+/* ---------- Footer ---------- */
+.site-footer{border-top:1px solid var(--line);background:#fff;padding:22px 0;text-align:center}
+.site-footer p{margin:0;font-size:.85rem;color:var(--muted)}
+
+/* ---------- Print ---------- */
+@media print{
+  .site-header,.stepper,.site-footer,.actions,.viewer{display:none!important}
+  .card{box-shadow:none;border:0;padding:0}
+  body{background:#fff}
+}

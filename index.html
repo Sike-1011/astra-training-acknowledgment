@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Training SOP Acknowledgement | Astra Global</title>
+<meta name="description" content="Astra Global training SOP read-and-acknowledge sign-off form.">
+<link rel="icon" href="assets/img/logo.jpg">
+<link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <img src="assets/img/logo.jpg" alt="Astra Global" class="logo">
+    <div class="header-text">
+      <h1>Training SOP Acknowledgement</h1>
+      <p>Read each document and record your sign-off</p>
+    </div>
+  </div>
+</header>
+
+<nav class="stepper" aria-label="Progress">
+  <div class="wrap stepper-inner" id="stepper"><!-- built by app.js --></div>
+</nav>
+
+<main class="wrap" id="main">
+
+  <!-- ============ STEP: DETAILS ============ -->
+  <section class="card step" id="step-details" data-step="details">
+    <h2>Your details</h2>
+    <p class="muted">All fields are required. These details are recorded against your acknowledgement.</p>
+
+    <form id="details-form" novalidate autocomplete="on">
+      <div class="grid">
+        <div class="field">
+          <label for="fullName">Full name</label>
+          <input type="text" id="fullName" name="fullName" required autocomplete="name"
+                 maxlength="80" placeholder="As per company records">
+          <span class="error" data-error-for="fullName"></span>
+        </div>
+
+        <div class="field">
+          <label for="employeeId">Employee ID</label>
+          <input type="text" id="employeeId" name="employeeId" required
+                 maxlength="30" placeholder="e.g. AG-1042">
+          <span class="error" data-error-for="employeeId"></span>
+        </div>
+
+        <div class="field">
+          <label for="email">Email address</label>
+          <input type="email" id="email" name="email" required autocomplete="email"
+                 maxlength="120" placeholder="name@example.com">
+          <span class="error" data-error-for="email"></span>
+        </div>
+
+        <div class="field">
+          <label for="contact">Contact number</label>
+          <input type="tel" id="contact" name="contact" required autocomplete="tel"
+                 maxlength="20" placeholder="10-digit mobile number">
+          <span class="error" data-error-for="contact"></span>
+        </div>
+
+        <div class="field">
+          <label for="doj">Date of joining</label>
+          <input type="date" id="doj" name="doj" required>
+          <span class="error" data-error-for="doj"></span>
+        </div>
+
+        <div class="field">
+          <label for="department">Department / Batch <span class="optional">(optional)</span></label>
+          <input type="text" id="department" name="department" maxlength="60" placeholder="e.g. Operations">
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="submit" class="btn btn-primary">Start reading &rarr;</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- ============ STEP: DOCUMENT (template, cloned per doc) ============ -->
+  <template id="doc-template">
+    <section class="card step doc-step" hidden>
+      <div class="doc-head">
+        <div>
+          <span class="pill" data-role="counter"></span>
+          <h2 data-role="title"></h2>
+          <p class="muted" data-role="desc"></p>
+        </div>
+        <a class="btn btn-ghost" data-role="newtab" target="_blank" rel="noopener">Open in new tab &#8599;</a>
+      </div>
+
+      <div class="viewer" data-role="viewer">
+        <iframe data-role="frame" title="Document viewer" loading="lazy"></iframe>
+        <div class="viewer-fallback" data-role="fallback">
+          <p><strong>Can't see the document above?</strong> Some mobile browsers can't display PDFs inline.</p>
+          <p><a data-role="fallback-link" target="_blank" rel="noopener" class="btn btn-primary">Open the PDF</a></p>
+        </div>
+      </div>
+
+      <div class="gate" data-role="gate">
+        <span class="spinner" aria-hidden="true"></span>
+        <span data-role="gate-text"></span>
+      </div>
+
+      <label class="certify" data-role="certify-wrap">
+        <input type="checkbox" data-role="certify" disabled>
+        <span>
+          <strong>I certify that I have read and understood this document.</strong>
+          <em data-role="certify-sub"></em>
+        </span>
+      </label>
+
+      <div class="actions actions-split">
+        <button type="button" class="btn btn-ghost" data-role="back">&larr; Back</button>
+        <button type="button" class="btn btn-primary" data-role="next" disabled>Continue &rarr;</button>
+      </div>
+    </section>
+  </template>
+
+  <!-- ============ STEP: REVIEW & SUBMIT ============ -->
+  <section class="card step" id="step-review" data-step="review" hidden>
+    <h2>Review &amp; submit</h2>
+    <p class="muted">Check your details below, then submit your acknowledgement.</p>
+
+    <dl class="summary" id="summary"></dl>
+
+    <h3>Documents acknowledged</h3>
+    <ul class="doc-summary" id="doc-summary"></ul>
+
+    <div class="declaration">
+      <label class="certify">
+        <input type="checkbox" id="final-declaration">
+        <span>
+          <strong>Final declaration</strong>
+          <em>I confirm that the details above are correct, that I have read and understood each of
+          the documents listed, and that I agree to comply with them. I understand this submission
+          is recorded electronically and is treated as my signature.</em>
+        </span>
+      </label>
+    </div>
+
+    <div class="actions actions-split">
+      <button type="button" class="btn btn-ghost" id="review-back">&larr; Back</button>
+      <button type="button" class="btn btn-primary" id="submit-btn" disabled>Submit acknowledgement</button>
+    </div>
+
+    <p class="submit-status" id="submit-status" role="status" aria-live="polite"></p>
+  </section>
+
+  <!-- ============ STEP: DONE ============ -->
+  <section class="card step done-card" id="step-done" data-step="done" hidden>
+    <div class="tick" aria-hidden="true">&#10003;</div>
+    <h2>Acknowledgement recorded</h2>
+    <p class="muted" id="done-msg"></p>
+
+    <div class="receipt" id="receipt"></div>
+
+    <div class="actions">
+      <button type="button" class="btn btn-ghost" id="print-btn">Print / save receipt</button>
+      <button type="button" class="btn btn-ghost" id="restart-btn">Submit for another person</button>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p>&copy; <span id="year"></span> Astra Global. Internal use only.</p>
+    <p class="muted small">Trouble submitting? Contact HR / your training coordinator.</p>
+  </div>
+</footer>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
