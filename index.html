@@ -36,28 +36,32 @@
         <div class="field">
           <label for="fullName">Full name</label>
           <input type="text" id="fullName" name="fullName" required autocomplete="name"
-                 maxlength="80" placeholder="As per company records">
+                 maxlength="80" placeholder="e.g. Arsh Khera">
           <span class="error" data-error-for="fullName"></span>
         </div>
 
         <div class="field">
           <label for="employeeId">Employee ID</label>
           <input type="text" id="employeeId" name="employeeId" required
-                 maxlength="30" placeholder="e.g. AG-1042">
+                 inputmode="numeric" maxlength="20" placeholder="16632 or N/A">
+          <label class="inline-check" for="employeeIdNa">
+            <input type="checkbox" id="employeeIdNa" name="employeeIdNa">
+            <span>I don't have an Employee ID yet (N/A)</span>
+          </label>
           <span class="error" data-error-for="employeeId"></span>
         </div>
 
         <div class="field">
           <label for="email">Email address</label>
           <input type="email" id="email" name="email" required autocomplete="email"
-                 maxlength="120" placeholder="name@example.com">
+                 maxlength="120" placeholder="arsh.khera@astraglobal.com">
           <span class="error" data-error-for="email"></span>
         </div>
 
         <div class="field">
           <label for="contact">Contact number</label>
           <input type="tel" id="contact" name="contact" required autocomplete="tel"
-                 maxlength="20" placeholder="10-digit mobile number">
+                 inputmode="numeric" maxlength="20" placeholder="10-digit mobile number">
           <span class="error" data-error-for="contact"></span>
         </div>
 
@@ -65,11 +69,6 @@
           <label for="doj">Date of joining</label>
           <input type="date" id="doj" name="doj" required>
           <span class="error" data-error-for="doj"></span>
-        </div>
-
-        <div class="field">
-          <label for="department">Department / Batch <span class="optional">(optional)</span></label>
-          <input type="text" id="department" name="department" maxlength="60" placeholder="e.g. Operations">
         </div>
       </div>
 

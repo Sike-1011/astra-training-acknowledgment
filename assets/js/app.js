@@ -267,20 +267,28 @@
   /* =======================================================================
      DETAILS FORM
      ===================================================================== */
+  var NA_VALUE = 'N/A';
+  function isNA(v) { return /^n\s*\/?\s*a$/i.test(String(v || '').trim()); }
+
   var VALIDATORS = {
     fullName: function (v) {
       if (v.length < 3) return 'Please enter your full name.';
       if (!/[A-Za-z]/.test(v)) return 'Please enter a valid name.';
       return '';
     },
-    employeeId: function (v) { return v.length < 2 ? 'Please enter your employee ID.' : ''; },
+    employeeId: function (v) {
+      if (!v) return 'Enter your 5-digit employee ID, or tick "N/A".';
+      if (isNA(v)) return '';
+      if (!/^\d{5}$/.test(v)) return 'Employee ID must be exactly 5 digits (e.g. 16632), or tick "N/A".';
+      return '';
+    },
     email: function (v) {
       return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v) ? '' : 'Please enter a valid email address.';
     },
     contact: function (v) {
       var digits = v.replace(/\D/g, '');
-      return digits.length < 7 || digits.length > 15
-        ? 'Please enter a valid contact number.' : '';
+      if (digits.length !== 10) return 'Contact number must be exactly 10 digits.';
+      return '';
     },
     doj: function (v) {
       if (!v) return 'Please select your date of joining.';
@@ -307,13 +315,13 @@
 
   function readDetails() {
     var f = els.detailsForm;
+    var empId = f.employeeIdNa.checked ? NA_VALUE : f.employeeId.value.trim();
     return {
       fullName: f.fullName.value.trim(),
-      employeeId: f.employeeId.value.trim(),
+      employeeId: isNA(empId) ? NA_VALUE : empId,
       email: f.email.value.trim(),
       contact: f.contact.value.trim(),
-      doj: f.doj.value,
-      department: f.department.value.trim()
+      doj: f.doj.value
     };
   }
 
@@ -335,10 +343,59 @@
 
   function fillDetailsForm() {
     var f = els.detailsForm, d = state.details;
-    ['fullName', 'employeeId', 'email', 'contact', 'doj', 'department'].forEach(function (n) {
+    ['fullName', 'employeeId', 'email', 'contact', 'doj'].forEach(function (n) {
       if (d[n] != null && f.elements[n]) f.elements[n].value = d[n];
     });
+    if (isNA(d.employeeId)) f.employeeIdNa.checked = true;
+    applyNaToggle();
   }
+
+  /* Ticking "N/A" fills the box with N/A and locks it. */
+  function applyNaToggle() {
+    var f = els.detailsForm, on = f.employeeIdNa.checked;
+    f.employeeId.disabled = on;
+    f.employeeId.required = !on;
+    if (on) {
+      f.employeeId.dataset.previous = isNA(f.employeeId.value) ? '' : f.employeeId.value;
+      f.employeeId.value = NA_VALUE;
+      showError('employeeId', '');
+    } else if (isNA(f.employeeId.value)) {
+      f.employeeId.value = f.employeeId.dataset.previous || '';
+    }
+  }
+
+  els.detailsForm.employeeIdNa.addEventListener('change', function () {
+    applyNaToggle();
+    if (!els.detailsForm.employeeIdNa.checked) els.detailsForm.employeeId.focus();
+  });
+
+  /* Keep the numeric fields numeric, whatever gets typed or pasted. */
+  function mask(input, maxLen, opts) {
+    opts = opts || {};
+    input.addEventListener('input', function () {
+      // Someone typing "N/A" by hand is fine — leave those keystrokes alone.
+      if (opts.allowNA && /^[nN]/.test(input.value)) return;
+      var digits = input.value.replace(/\D/g, '');
+      // Pasting "+91 98765 43210" or "098765 43210" should keep the right 10
+      // digits, not blindly truncate to the first ten.
+      if (opts.stripDialPrefix) {
+        if (digits.length === 12 && digits.indexOf('91') === 0) digits = digits.slice(2);
+        else if (digits.length === 11 && digits.charAt(0) === '0') digits = digits.slice(1);
+      }
+      digits = digits.slice(0, maxLen);
+      if (digits !== input.value) input.value = digits;
+    });
+  }
+  mask(els.detailsForm.employeeId, 5, { allowNA: true });
+  mask(els.detailsForm.contact, 10, { stripDialPrefix: true });
+
+  // A hand-typed "n/a" becomes the tickbox state, so the two stay in step.
+  els.detailsForm.employeeId.addEventListener('blur', function () {
+    if (isNA(els.detailsForm.employeeId.value)) {
+      els.detailsForm.employeeIdNa.checked = true;
+      applyNaToggle();
+    }
+  });
 
   els.detailsForm.addEventListener('submit', function (ev) {
     ev.preventDefault();
@@ -369,8 +426,7 @@
       ['Employee ID', d.employeeId],
       ['Email', d.email],
       ['Contact', d.contact],
-      ['Date of joining', fmtDate(d.doj)],
-      ['Department / Batch', d.department || '—']
+      ['Date of joining', fmtDate(d.doj)]
     ].map(function (r) {
       return '<dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd>';
     }).join('');
@@ -401,7 +457,6 @@
       email: state.details.email,
       contact: state.details.contact,
       dateOfJoining: state.details.doj,
-      department: state.details.department || '',
       startedAt: state.startedAt,
       submittedAt: new Date().toISOString(),
       timezone: (Intl.DateTimeFormat().resolvedOptions().timeZone || ''),

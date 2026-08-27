@@ -8,7 +8,7 @@ window.APP_CONFIG = {
         Deploy > New deployment > Web app > Execute as: Me,
         Who has access: Anyone. Copy the /exec URL.
      --------------------------------------------------------------------- */
-  ENDPOINT: 'PASTE_YOUR_APPS_SCRIPT_EXEC_URL_HERE',
+  ENDPOINT: 'https://script.google.com/macros/s/AKfycbyQUA189-GDhMiwzoG4kWfTcliPLotZMEccxv0HNKBeQVN29bmUcb7PHD3VgMxR_gbTsQ/exec',
 
   /* Company name shown in messages */
   COMPANY: 'Astra Global',

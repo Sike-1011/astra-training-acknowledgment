@@ -69,7 +69,6 @@ main{padding:28px 0 56px}
   text-transform:uppercase;letter-spacing:.6px}
 .muted{color:var(--muted);margin:0 0 18px}
 .small{font-size:.82rem}
-.optional{font-weight:400;color:var(--muted);font-size:.82em}
 
 /* ---------- Form ---------- */
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px 18px}
@@ -83,7 +82,16 @@ input[type=text],input[type=email],input[type=tel],input[type=date]{
 }
 input:focus{outline:none;border-color:var(--navy-light);box-shadow:0 0 0 3px rgba(44,81,131,.14)}
 input.invalid{border-color:var(--err);background:var(--err-bg)}
+input:disabled{background:#eef1f5;color:var(--muted);cursor:not-allowed}
 .error{color:var(--err);font-size:.78rem;min-height:1.1em;margin-top:4px}
+
+/* "N/A" toggle sitting under the employee ID box */
+.inline-check{
+  display:flex;align-items:center;gap:7px;margin:7px 0 0;
+  font-size:.8rem;font-weight:400;color:var(--muted);cursor:pointer;
+}
+.inline-check input{width:15px;height:15px;margin:0;flex:0 0 auto;accent-color:var(--navy);cursor:pointer}
+.inline-check:hover{color:var(--navy)}
 
 /* ---------- Buttons ---------- */
 .actions{display:flex;gap:12px;margin-top:24px;flex-wrap:wrap}
