@@ -87,14 +87,15 @@
           <h2 data-role="title"></h2>
           <p class="muted" data-role="desc"></p>
         </div>
-        <a class="btn btn-ghost" data-role="newtab" target="_blank" rel="noopener">Open in new tab &#8599;</a>
       </div>
 
       <div class="viewer" data-role="viewer">
-        <iframe data-role="frame" title="Document viewer" loading="lazy"></iframe>
-        <div class="viewer-fallback" data-role="fallback">
-          <p><strong>Can't see the document above?</strong> Some mobile browsers can't display PDFs inline.</p>
-          <p><a data-role="fallback-link" target="_blank" rel="noopener" class="btn btn-primary">Open the PDF</a></p>
+        <div class="pdf-scroll" data-role="scroll" tabindex="0" role="document">
+          <div class="pdf-pages" data-role="pages"></div>
+        </div>
+        <div class="pdf-status" data-role="status">
+          <span class="spinner" aria-hidden="true"></span>
+          <span data-role="status-text">Loading document…</span>
         </div>
       </div>
 
@@ -150,6 +151,7 @@
 
   <!-- ============ STEP: DONE ============ -->
   <section class="card step done-card" id="step-done" data-step="done" hidden>
+    <p class="print-only print-head">Astra Global &mdash; Training SOP Acknowledgement</p>
     <div class="tick" aria-hidden="true">&#10003;</div>
     <h2>Acknowledgement recorded</h2>
     <p class="muted" id="done-msg"></p>
@@ -158,7 +160,6 @@
 
     <div class="actions">
       <button type="button" class="btn btn-ghost" id="print-btn">Print / save receipt</button>
-      <button type="button" class="btn btn-ghost" id="restart-btn">Submit for another person</button>
     </div>
   </section>
 
@@ -171,6 +172,8 @@
   </div>
 </footer>
 
+<!-- Mozilla pdf.js (Apache-2.0), vendored — see assets/vendor/pdfjs/LICENSE -->
+<script src="assets/vendor/pdfjs/pdf.min.js"></script>
 <script src="assets/js/config.js"></script>
 <script src="assets/js/app.js"></script>
 </body>

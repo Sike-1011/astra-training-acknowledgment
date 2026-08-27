@@ -32,8 +32,7 @@
     reviewBack: document.getElementById('review-back'),
     receipt: document.getElementById('receipt'),
     doneMsg: document.getElementById('done-msg'),
-    printBtn: document.getElementById('print-btn'),
-    restartBtn: document.getElementById('restart-btn')
+    printBtn: document.getElementById('print-btn')
   };
 
   var docSteps = [];   // one entry per document: { cfg, section, refs, timer, seconds }
@@ -110,10 +109,11 @@
         counter: q(node, 'counter'),
         title: q(node, 'title'),
         desc: q(node, 'desc'),
-        newtab: q(node, 'newtab'),
         viewer: q(node, 'viewer'),
-        frame: q(node, 'frame'),
-        fallbackLink: q(node, 'fallback-link'),
+        scroll: q(node, 'scroll'),
+        pages: q(node, 'pages'),
+        status: q(node, 'status'),
+        statusText: q(node, 'status-text'),
         gate: q(node, 'gate'),
         gateText: q(node, 'gate-text'),
         certify: q(node, 'certify'),
@@ -125,17 +125,18 @@
       refs.counter.textContent = 'Document ' + (index + 1) + ' of ' + DOCS.length;
       refs.title.textContent = docCfg.title;
       refs.desc.textContent = docCfg.desc || '';
-      refs.newtab.href = docCfg.file;
-      refs.fallbackLink.href = docCfg.file;
       refs.certifySub.textContent = docCfg.title + (docCfg.version ? ' (' + docCfg.version + ')' : '');
-
-      // Some mobile browsers cannot render a PDF in an iframe — show the link instead.
-      if (!canRenderPdfInline()) refs.viewer.classList.add('no-inline');
 
       var entry = {
         cfg: docCfg, index: index, section: node, refs: refs,
-        seconds: 0, timer: null, loaded: false
+        seconds: 0, timer: null, loaded: false,
+        reachedEnd: false, failed: false, pdf: null
       };
+
+      // Pages are canvases we own, so right-click can be taken away here —
+      // unlike an embedded PDF viewer, which handles its own menu.
+      refs.pages.addEventListener('contextmenu', function (ev) { ev.preventDefault(); });
+      refs.scroll.addEventListener('scroll', function () { checkScrolledToEnd(entry); });
 
       refs.certify.addEventListener('change', function () {
         refs.next.disabled = !refs.certify.checked;
@@ -161,38 +162,187 @@
     });
   }
 
-  function canRenderPdfInline() {
-    // navigator.pdfViewerEnabled is the modern signal; fall back to a UA check.
-    if (typeof navigator.pdfViewerEnabled === 'boolean') return navigator.pdfViewerEnabled;
-    return !/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  /* =======================================================================
+     PDF RENDERING (pdf.js)
+
+     Every page is drawn onto a canvas we control, instead of handing the file
+     to the browser's built-in PDF viewer in an iframe. That buys three things:
+     it works on phones, where inline PDFs mostly don't; there is no viewer
+     toolbar with download and print buttons; and right-click yields a picture
+     of a page rather than the document.
+
+     What it does NOT do is hide the file. pdf.js still has to fetch the PDF
+     over the network to draw it, so it remains visible in the browser's
+     developer tools and at its own URL. This raises the bar; it is not a lock.
+     ===================================================================== */
+
+  var PDFJS = window.pdfjsLib;
+  if (PDFJS) {
+    PDFJS.GlobalWorkerOptions.workerSrc = 'assets/vendor/pdfjs/pdf.worker.min.js';
+  }
+
+  // Cap the pixel ratio: 3x on a phone triples memory for no visible gain.
+  var PIXEL_RATIO = Math.min(window.devicePixelRatio || 1, 2);
+
+  function renderDocument(entry) {
+    if (!PDFJS) {
+      showViewerError(entry, 'The document viewer failed to load. Please refresh the page.');
+      return;
+    }
+
+    setViewerStatus(entry, 'Loading document…', true);
+
+    var task = PDFJS.getDocument({
+      url: entry.cfg.file,
+      // Needed only when a PDF relies on the standard 14 fonts without
+      // embedding them. The current SOPs embed their fonts, but a replacement
+      // exported from another tool might not, and the failure is silent.
+      standardFontDataUrl: 'assets/vendor/pdfjs/standard_fonts/'
+    });
+
+    task.promise.then(function (pdf) {
+      entry.pdf = pdf;
+      var width = Math.max(entry.refs.scroll.clientWidth - 24, 320);
+      var chain = Promise.resolve();
+
+      for (var n = 1; n <= pdf.numPages; n++) {
+        chain = chain.then(renderPage.bind(null, entry, pdf, n, width));
+      }
+
+      return chain.then(function () {
+        setViewerStatus(entry, '', false);
+        entry.refs.viewer.classList.add('loaded');
+        // A document short enough not to scroll is already "read to the end".
+        checkScrolledToEnd(entry);
+      });
+    }).catch(function (err) {
+      showViewerError(entry,
+        'This document could not be displayed. Please refresh the page, and ' +
+        'contact HR if it keeps happening.');
+      console.error('[SOP form] Failed to render ' + entry.cfg.file, err);
+    });
+  }
+
+  function renderPage(entry, pdf, pageNo, width) {
+    return pdf.getPage(pageNo).then(function (page) {
+      var unscaled = page.getViewport({ scale: 1 });
+      var viewport = page.getViewport({ scale: width / unscaled.width });
+
+      var canvas = document.createElement('canvas');
+      canvas.className = 'pdf-page';
+      canvas.width = Math.floor(viewport.width * PIXEL_RATIO);
+      canvas.height = Math.floor(viewport.height * PIXEL_RATIO);
+      canvas.style.width = '100%';
+      canvas.setAttribute('aria-label', 'Page ' + pageNo + ' of ' + pdf.numPages);
+
+      var wrap = document.createElement('div');
+      wrap.className = 'pdf-page-wrap';
+      wrap.appendChild(canvas);
+
+      var label = document.createElement('div');
+      label.className = 'pdf-page-label';
+      label.textContent = 'Page ' + pageNo + ' of ' + pdf.numPages;
+      wrap.appendChild(label);
+
+      entry.refs.pages.appendChild(wrap);
+      setViewerStatus(entry, 'Loading document… page ' + pageNo + ' of ' + pdf.numPages, true);
+
+      return page.render({
+        canvasContext: canvas.getContext('2d'),
+        viewport: viewport,
+        transform: PIXEL_RATIO !== 1 ? [PIXEL_RATIO, 0, 0, PIXEL_RATIO, 0, 0] : null
+      }).promise;
+    });
+  }
+
+  function setViewerStatus(entry, text, busy) {
+    entry.refs.statusText.textContent = text;
+    entry.refs.status.hidden = !text;
+    entry.refs.status.classList.toggle('is-error', !busy && !!text);
+  }
+
+  /**
+   * Deliberately leaves the certify checkbox locked. Letting someone sign off a
+   * document that failed to display would put a false acknowledgement into the
+   * record, which is worse than making them retry — and a document that won't
+   * load is a site problem affecting everyone, so it should surface loudly.
+   */
+  function showViewerError(entry, message) {
+    entry.failed = true;              // sticky: nothing may unlock this step now
+    setViewerStatus(entry, message, false);
+    entry.refs.viewer.classList.add('has-error');
+    stopTimer(entry);
+    entry.refs.certify.checked = false;
+    entry.refs.certify.disabled = true;
+    entry.refs.next.disabled = true;
+    entry.refs.gate.classList.remove('unlocked');
+    entry.refs.gateText.textContent =
+      'This document must be displayed before you can confirm you have read it.';
   }
 
   /* =======================================================================
-     READ GATE — unlocks the certify checkbox after MIN_READ_SECONDS
+     READ GATE
+
+     The "I certify" checkbox unlocks once BOTH conditions are met:
+       - the document has been open for MIN_READ_SECONDS (paused while the
+         tab is hidden), and
+       - the reader has scrolled to the last page (skipped when the document
+         fits on screen without scrolling, or when REQUIRE_SCROLL_TO_END is off).
      ===================================================================== */
   var MIN_SECONDS = typeof CFG.MIN_READ_SECONDS === 'number' ? CFG.MIN_READ_SECONDS : 20;
+  var REQUIRE_SCROLL = CFG.REQUIRE_SCROLL_TO_END !== false;
+  var SCROLL_TOLERANCE = 24;   // px of slack, for fractional zoom levels
 
   function startTimer(entry) {
     stopTimer(entry);
-    if (entry.refs.certify.checked || entry.seconds >= MIN_SECONDS) { unlockGate(entry); return; }
-    updateGate(entry);
+    if (entry.failed) return;
+    if (entry.refs.certify.checked) { unlockGate(entry); return; }
+    refreshGate(entry);
+    if (entry.seconds >= MIN_SECONDS) return;
     entry.timer = setInterval(function () {
       if (document.visibilityState !== 'visible') return;   // pause on a hidden tab
       entry.seconds += 1;
-      if (entry.seconds >= MIN_SECONDS) { unlockGate(entry); } else { updateGate(entry); }
+      refreshGate(entry);
+      if (entry.seconds >= MIN_SECONDS) stopTimer(entry);
     }, 1000);
   }
+
   function stopTimer(entry) {
     if (entry.timer) { clearInterval(entry.timer); entry.timer = null; }
   }
-  function updateGate(entry) {
-    var left = Math.max(0, MIN_SECONDS - Math.floor(entry.seconds));
-    entry.refs.gateText.textContent =
-      'Please read the document. The confirmation below unlocks in ' + left +
-      ' second' + (left === 1 ? '' : 's') + '.';
+
+  function checkScrolledToEnd(entry) {
+    if (entry.failed || entry.reachedEnd) return;
+    var el = entry.refs.scroll;
+    var atEnd = el.scrollTop + el.clientHeight >= el.scrollHeight - SCROLL_TOLERANCE;
+    if (atEnd) {
+      entry.reachedEnd = true;
+      refreshGate(entry);
+    }
   }
+
+  /** Recomputes the gate message and unlocks when both conditions are met. */
+  function refreshGate(entry) {
+    if (entry.failed) return;
+    var timeLeft = Math.max(0, MIN_SECONDS - Math.floor(entry.seconds));
+    var scrollDone = !REQUIRE_SCROLL || entry.reachedEnd;
+
+    if (timeLeft <= 0 && scrollDone) { unlockGate(entry); return; }
+
+    if (timeLeft > 0) {
+      entry.refs.gateText.textContent =
+        'Please read the document. The confirmation below unlocks in ' + timeLeft +
+        ' second' + (timeLeft === 1 ? '' : 's') + '.';
+    } else {
+      entry.refs.gateText.textContent =
+        'Scroll to the end of the document to confirm you have read it.';
+    }
+  }
+
   function unlockGate(entry) {
+    if (entry.failed) return;
     stopTimer(entry);
+    entry.reachedEnd = true;
     entry.refs.gate.classList.add('unlocked');
     entry.refs.gateText.textContent = 'You can now confirm that you have read this document.';
     entry.refs.certify.disabled = false;
@@ -229,9 +379,9 @@
     } else if (state.step <= DOCS.length) {
       var entry = docSteps[state.step - 1];
       entry.section.hidden = false;
-      if (!entry.loaded) {                      // load the PDF only when first shown
-        entry.refs.frame.src = entry.cfg.file;
+      if (!entry.loaded) {                      // render the PDF only when first shown
         entry.loaded = true;
+        renderDocument(entry);
       }
       var ack = state.acks[entry.cfg.id];
       if (ack) {
@@ -468,6 +618,7 @@
           id: doc.id,
           title: doc.title,
           version: doc.version || '',
+          link: doc.link || '',
           file: doc.file,
           certified: true,
           certifiedAt: ack.certifiedAt || '',
@@ -518,10 +669,29 @@
         showDone(payload, data);
       })
       .catch(function (err) {
-        setStatus(
-          'Could not submit: ' + err.message +
-          ' Please check your connection and try again. If this keeps happening, ' +
-          'take a screenshot of this page and contact HR.', 'err');
+        // A TypeError here means the request never got a readable response —
+        // no connection, or the endpoint answered without CORS headers (which
+        // is what an Apps Script error page or a login redirect looks like).
+        var unreachable = (err instanceof TypeError) ||
+          /failed to fetch|networkerror|load failed/i.test(err.message || '');
+
+        if (unreachable) {
+          setStatus('Could not reach the server. Please check your internet connection ' +
+                    'and try again. If this keeps happening, take a screenshot of this ' +
+                    'page and contact HR.', 'err');
+          // Aimed at whoever set this up, not the person filling the form.
+          console.error(
+            '[SOP form] The submission never reached ' + CFG.ENDPOINT + '\n' +
+            'Check, in order:\n' +
+            '  1. Open that URL in a browser tab. It must return JSON starting {"status":"ok"...}.\n' +
+            '     - "ReferenceError: window is not defined" means the Apps Script project has a\n' +
+            '       browser file pasted into it. It needs apps-script/Code.gs, nothing else.\n' +
+            '     - A Google sign-in page means the deployment\'s "Who has access" is not "Anyone".\n' +
+            '  2. After any edit to Code.gs, publish a NEW deployment version.', err);
+        } else {
+          setStatus('Could not submit: ' + err.message +
+                    ' Please try again, or contact HR with a screenshot of this page.', 'err');
+        }
         els.submitBtn.disabled = false;
         els.reviewBack.disabled = false;
         els.submitBtn.textContent = 'Try submitting again';
@@ -539,7 +709,17 @@
   function showDone(payload, data) {
     els.detailsStep.hidden = true;
     els.reviewStep.hidden = true;
-    docSteps.forEach(function (e) { e.section.hidden = true; stopTimer(e); });
+
+    // Take the documents out of the page entirely once the sign-off is in.
+    // They have served their purpose, and nothing left in the DOM can then end
+    // up in a printed receipt or keep a PDF loaded in the background.
+    docSteps.forEach(function (e) {
+      stopTimer(e);
+      e.refs.pages.innerHTML = '';
+      if (e.pdf) { try { e.pdf.destroy(); } catch (err) { /* already gone */ } e.pdf = null; }
+      if (e.section.parentNode) e.section.parentNode.removeChild(e.section);
+    });
+
     els.doneStep.hidden = false;
 
     els.doneMsg.textContent =
@@ -567,10 +747,6 @@
   }
 
   els.printBtn.addEventListener('click', function () { window.print(); });
-  els.restartBtn.addEventListener('click', function () {
-    clearSaved();
-    location.reload();
-  });
 
   /* =======================================================================
      INIT
